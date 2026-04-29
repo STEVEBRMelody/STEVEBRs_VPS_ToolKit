@@ -48,10 +48,10 @@ log() {
 ' "$(date '+%F %T')" "$level" "$msg" | tee -a "$LOG_FILE" >/dev/null || true
 }
 
-info() { echo -e "${BLUE}[INFO]${NC} $*"; log INFO "$*"; }
-success() { echo -e "${GREEN}[OK]${NC} $*"; log OK "$*"; }
-warn() { echo -e "${YELLOW}[WARN]${NC} $*"; log WARN "$*"; }
-error() { echo -e "${RED}[ERR]${NC} $*"; log ERROR "$*"; }
+info() { echo -e "${BLUE}[INFO]${NC} $*" >&2; log INFO "$*"; }
+success() { echo -e "${GREEN}[OK]${NC} $*" >&2; log OK "$*"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $*" >&2; log WARN "$*"; }
+error() { echo -e "${RED}[ERR]${NC} $*" >&2; log ERROR "$*"; }
 
 pause() {
   echo
