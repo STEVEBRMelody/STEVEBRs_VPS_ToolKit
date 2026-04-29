@@ -381,47 +381,13 @@ show_paths() {
   pause
 }
 
-show_github_help() {
-  show_header
-  cat <<EOF
-GitHub 托管模式说明
-------------------------------------------------------------
-
-仓库推荐结构：
-
-  vpsctl.sh
-  registry/scripts.conf
-  scripts/network/bbr.sh
-  scripts/app/install-nginx.sh
-
-registry/scripts.conf 示例：
-
-  bbr|开启 BBR|scripts/network/bbr.sh|bash|
-  nginx|安装 Nginx|scripts/app/install-nginx.sh|bash|
-
-新增脚本流程：
-
-  1. 把脚本放到 GitHub 仓库的 scripts/ 目录
-  2. 在 registry/scripts.conf 加一行
-  3. VPS 上重新进入“运行 GitHub 登记的脚本”菜单
-
-这个版本不会在 VPS 保存索引缓存。
-每次打开脚本菜单时，都会实时读取：
-
-  $REMOTE_REGISTRY_URL
-
-EOF
-  pause
-}
-
 main_menu() {
   while true; do
     show_header
     echo "  1) 查看系统信息"
     echo "  2) 更新系统软件包"
-    echo "  5) 运行 GitHub 登记的脚本"
-    echo " 11) 显示配置/路径"
-    echo " 12) GitHub 托管模式说明"
+    echo "  3) 运行 GitHub 登记的脚本"
+    echo "  4) 显示配置/路径"
     echo "  0) 退出"
     echo
 
@@ -431,9 +397,8 @@ main_menu() {
     case "$choice" in
       1) os_info ;;
       2) update_system ;;
-      5) run_registry_script ;;
-      11) show_paths ;;
-      12) show_github_help ;;
+      3) run_registry_script ;;
+      4) show_paths ;;
       0) exit 0 ;;
       *) warn "无效选择。"; sleep 1 ;;
     esac
