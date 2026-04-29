@@ -26,8 +26,8 @@ LOG_FILE="/var/log/vpsctl.log"
 TMP_DIR="/tmp/vpsctl.$$"
 
 # ==================== GitHub remote script registry ====================
-GITHUB_OWNER="${VPSCTL_GITHUB_OWNER:-YOUR_NAME}"
-GITHUB_REPO="${VPSCTL_GITHUB_REPO:-YOUR_REPO}"
+GITHUB_OWNER="${VPSCTL_GITHUB_OWNER:-STEVEBRMelody}"
+GITHUB_REPO="${VPSCTL_GITHUB_REPO:-STEVEBRs_VPS_ToolKit}"
 GITHUB_BRANCH="${VPSCTL_GITHUB_BRANCH:-main}"
 
 GITHUB_RAW_BASE="${VPSCTL_GITHUB_RAW_BASE:-https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}}"
