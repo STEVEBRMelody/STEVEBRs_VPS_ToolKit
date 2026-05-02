@@ -50,27 +50,6 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-usage() {
-  cat <<'EOF'
-用法:
-  change-ssh-port.sh [新端口] [选项]
-
-示例:
-  change-ssh-port.sh
-  change-ssh-port.sh 2222
-  change-ssh-port.sh 2222 --replace
-
-选项:
-  --replace   只保留新端口，会关闭旧 SSH 端口，风险更高
-  --yes       跳过交互确认，适合自动化场景
-  -h, --help  显示帮助
-
-说明:
-  默认安全模式会保留当前 SSH 端口作为回退，同时新增目标端口。
-  确认新端口可以连接后，可再次使用 --replace 只保留新端口。
-EOF
-}
-
 detect_pkg_manager() {
   if command_exists apt-get; then
     printf 'apt-get\n'
@@ -87,6 +66,7 @@ detect_pkg_manager() {
 
 install_package() {
   local mgr=""
+
   if ! mgr="$(detect_pkg_manager)"; then
     error "未识别到支持的包管理器：apt-get / dnf / yum / apk"
     return 1
@@ -219,6 +199,7 @@ list_sshd_config_files() {
 
 parse_configured_ports() {
   local file=""
+
   while IFS= read -r file; do
     awk '
       /^[[:space:]]*#/ { next }
@@ -710,6 +691,7 @@ main() {
   local new_port=""
   local normalized_port=""
   local replace_mode=0
+  local replace_mode_set=0
   local assume_yes=0
   local current_ports=""
   local target_ports=""
@@ -719,20 +701,16 @@ main() {
     case "$1" in
       --replace)
         replace_mode=1
+        replace_mode_set=1
         ;;
       --yes)
         assume_yes=1
-        ;;
-      -h|--help)
-        usage
-        exit 0
         ;;
       *)
         if [[ -z "${new_port}" ]]; then
           new_port="$1"
         else
           error "未知参数：$1"
-          usage
           exit 1
         fi
         ;;
@@ -744,7 +722,7 @@ main() {
     if [[ -t 0 ]]; then
       read -r -p "请输入新的 SSH 端口，例如 2222: " new_port
     else
-      error "未提供新端口。示例：change-ssh-port.sh 2222"
+      error "未提供新端口。"
       exit 1
     fi
   fi
@@ -759,21 +737,28 @@ main() {
 
   check_port_in_use "${new_port}" "${current_ports}" || exit 1
 
+  if (( replace_mode_set == 0 )); then
+    warn "安全模式会保留旧 SSH 端口，避免新端口未放行时失联。"
+    warn "replace 模式会关闭旧 SSH 端口，只保留新端口，风险更高。"
+
+    if (( assume_yes == 0 )) && [[ -t 0 ]]; then
+      if confirm "是否启用 replace 模式，只保留新端口 ${new_port}/tcp？"; then
+        replace_mode=1
+      else
+        replace_mode=0
+      fi
+    else
+      replace_mode=0
+    fi
+  fi
+
   if (( replace_mode == 1 )); then
     keep_existing=0
-    warn "--replace 模式会关闭旧 SSH 端口，只保留 ${new_port}/tcp。"
+    warn "当前选择：replace 模式，只保留 ${new_port}/tcp。"
     warn "如果新端口未被系统防火墙、云安全组或 SELinux 放行，你可能会失去 SSH 连接。"
-
-    if (( assume_yes == 0 )); then
-      confirm "确认只保留新 SSH 端口 ${new_port}/tcp？" || {
-        warn "用户取消操作。"
-        exit 0
-      }
-    fi
   else
     keep_existing=1
-    warn "安全模式：将保留当前 SSH 端口作为回退，并新增 ${new_port}/tcp。"
-    warn "确认新端口可连接后，可再次运行本脚本并加 --replace 只保留新端口。"
+    warn "当前选择：安全模式，保留旧 SSH 端口，并新增 ${new_port}/tcp。"
   fi
 
   target_ports="$(build_target_ports "${new_port}" "${keep_existing}" "${current_ports}")"
@@ -814,8 +799,7 @@ main() {
   info "请使用新终端测试连接，例如：ssh -p ${new_port} root@你的服务器IP"
 
   if (( keep_existing == 1 )); then
-    warn "旧 SSH 端口仍保留作为回退。确认 ${new_port}/tcp 可正常登录后，可运行："
-    warn "$0 ${new_port} --replace"
+    warn "旧 SSH 端口仍保留作为回退。确认 ${new_port}/tcp 可正常登录后，可再次运行脚本并在交互中选择 replace 模式。"
   fi
 }
 
